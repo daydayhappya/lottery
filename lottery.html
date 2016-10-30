@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<meta user-scalable="no">
+		<title></title>
+		<style>
+			#lottery {
+				width: 570px;
+				height: 510px;
+				margin: 0px auto;
+				border: 4px solid #ba1809;
+				position: relative;
+			}
+			
+			#lottery table {
+				background-color: yellow;
+			}
+			
+			#lottery table td {
+				position: relative;
+				width: 190px;
+				height: 170px;
+				text-align: center;
+				color: #333;
+				font-index: -999
+			}
+			
+			#lottery table td img {
+				display: block;
+				width: 190px;
+				height: 170px;
+			}
+			
+			#lottery table td a {
+				width: 190px;
+				height: 170px;
+				display: block;
+				text-decoration: none;
+				background: rgba(233, 233, 233, .1) no-repeat top center;
+			}
+			
+			#lottery table td a:hover {
+				background: rgba(0, 0, 0, .2);
+			}
+			
+			#lottery table td.active .mask {
+				display: block;
+			}
+			
+			.mask {
+				width: 100%;
+				height: 100%;
+				position: absolute;
+				left: 0;
+				top: 0;
+				background-color: rgba(252, 211, 4, 0.5);
+				display: none;
+			}
+			
+			.integral {
+				position: absolute;
+				left: -140px;
+				bottom: 10px;
+				color: #000;
+				height: 60px;
+				border: 2px solid #399;
+				min-width: 60px;
+				text-align: center;
+				line-height: 60px;
+				font-size: 20px;
+			}
+		</style>
+	</head>
+
+	<body class="keBody">
+		<!--效果html开始-->
+		<div id="lottery">
+			<span class="integral"></span>
+			<table border="0" cellpadding="0" cellspacing="0">
+				<tr>
+					<td class="prize prize-0"><img src="/imgs/img1.png" alt="xxx">
+						<div class="mask"></div>
+					</td>
+					<td class="prize prize-1"><img src="/imgs/img2.png" alt="xxx">
+						<div class="mask"></div>
+					</td>
+					<td class="prize prize-2"><img src="/imgs/img3.png" alt="xxx">
+						<div class="mask"></div>
+					</td>
+				</tr>
+				<tr>
+					<td class="prize prize-7"><img src="/imgs/img4.png" alt="xxx">
+						<div class="mask"></div>
+					</td>
+					<td>
+						<a href="#" id="btn"></a>
+					</td>
+					<td class="prize prize-3"><img src="/imgs/img5.png" alt="xxx" >
+						<div class="mask"></div>
+					</td>
+				</tr>
+				<tr>
+					<td class="prize prize-6"><img src="/imgs/img6.png" alt="xxx">
+						<div class="mask"></div>
+					</td>
+					<td class="prize prize-5"><img src="/imgs/img7.png" alt="xxx">
+						<div class="mask"></div>
+					</td>
+					<td class="prize prize-4"><img src="/imgs/img8.png" alt="xxx">
+						<div class="mask"></div>
+					</td>
+				</tr>
+			</table>
+		</div>
+		<script src="http://code.jquery.com/jquery-latest.js"></script>
+		<script type="text/javascript">
+			function Lottery(id) {
+				this.index = -1; //当前位置索引
+				this.count = 0; //总共位置
+				this.timer = null; //
+				this.speed = 60; //初始转动速度
+				this.times = 0; //转动次数
+				this.cycle = 30; //转动基本次数：即至少需要转动多少次再进入抽奖环节
+				this.prize = 3; //中奖位
+				this.id = id; //盒子id
+				this.obj = $("#" + this.id);
+				this.units = this.obj.find(".prize");
+				this.count = this.units.length;
+				this.isClick = false;
+				this.drain = 100; //积分
+			}
+			Lottery.prototype = {
+				//当前状态
+				setState: function() {
+					if(this.count > 0) {
+						this.obj.find(".prize-" + this.index).addClass("active");
+					}
+				},
+				//索引改变
+				changeIndex: function() {
+					this.units.removeClass('active');
+					this.index++;
+					if(this.index > this.count - 1) {
+						this.index = 0;
+					}
+					this.setState();
+				},
+				//运动
+				rotate: function() {
+					var that = this;
+					clearTimeout(that.timer);
+					if(typeof(that.rotate) == 'function') {
+						that.timer = setTimeout(function() {
+							that.rotate();
+						}, that.speed);
+					}
+					that.changeIndex();
+					that.times++;
+					that.judge();
+				},
+				//判断加减速和是否停止
+				judge: function() {
+
+					// 完成
+					if(this.times > this.cycle && this.index == this.prize) {
+						var that = this;
+						clearTimeout(that.timer);
+						that.timer = null;
+						this.times = 0;
+						this.speed = 60;
+						this.index = -1;
+
+						clearTimeout(that.click);
+						that.click = setTimeout(function() {
+							that.alertPrize(that.prize);
+						}, 100);
+
+					}
+					
+					//快接近 减速
+					if(this.times > this.cycle && ((this.prize == 1 && this.index == 5) || this.prize == this.index + 3)) {
+						this.speed += 180;
+					} 
+					else {
+						this.speed += 3;
+					}
+				},
+				//成功提示信息
+				alertPrize: function(prize) {
+					var that = this,
+						alertTxt;
+					switch(prize) {
+						case 3:
+							that.isClick = false;
+							alert('恭喜获得。。。。');
+							break;
+					}
+				},
+				//中奖礼品
+				getPrize: function(url, json) {
+					var that = this;
+					$.ajax({
+						url: url,
+						data: json,
+						dataType: 'json',
+						type: 'post',
+						success: function(res) {
+
+						},
+						error: function() {
+
+						}
+					})
+				},
+				click: function() {
+					var btn = $('#btn'),
+						that = this,
+						integralbox = $('.integral');
+					var integral = $.trim(integralbox.text()); //积分
+					integral = 200;
+					integralbox.text(integral);
+					btn.on('click', function() {
+						if(that.isClick) return;
+						that.isClick = true;
+						if(integral < that.drain) {
+							alert('您的积分不足');
+							that.isClick = false;
+							return;
+						} else {
+							integral -= that.drain;
+							integralbox.text(integral);
+							//                    that.getPrize();
+							that.rotate();
+						}
+					})
+				},
+				init: function() {
+					this.setState();
+					this.click();
+				}
+			};
+			$(function() {
+				var lottery = new Lottery('lottery');
+				lottery.init();
+			});
+		</script>
+
+	</body>
+
+</html>
